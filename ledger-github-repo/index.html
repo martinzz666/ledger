@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="記帳">
+<meta name="theme-color" content="#EFEDE8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icon-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<title>記帳</title>
+<style>
+  :root{
+    --paper:#EFEDE8;
+    --sheet:#FAF9F6;
+    --rule:#DAD6CC;
+    --ink:#2E2C29;
+    --mute:#8E8880;
+    --faint:#B6B0A6;
+    --sage:#6F7F68;
+    --seal:#8C3B34;
+    --tap:rgba(46,44,41,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Hiragino Sans","PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+    font-size:16px;line-height:1.5;font-weight:400;
+    -webkit-font-smoothing:antialiased;overscroll-behavior-y:none;
+  }
+  button,input,select{font:inherit;color:inherit;}
+  button{background:none;border:0;padding:0;cursor:pointer;}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;letter-spacing:.01em;}
+
+  #app{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;}
+  header{
+    padding:calc(env(safe-area-inset-top) + 14px) 22px 12px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  #title{font-size:15px;font-weight:500;letter-spacing:.06em;min-width:9.5em;text-align:center;}
+  .nav-arrow{width:44px;height:44px;display:grid;place-items:center;color:var(--faint);font-size:17px;border-radius:50%;}
+  .nav-arrow:active{background:var(--tap);color:var(--ink);}
+  .nav-arrow[hidden]{visibility:hidden;display:grid;}
+
+  main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 22px 32px;}
+  main[hidden]{display:none;}
+
+  .balance{padding:18px 0 26px;border-bottom:1px solid var(--rule);}
+  .balance .figure{font-size:44px;font-weight:200;line-height:1;letter-spacing:-.015em;}
+  .balance .figure .unit{font-size:17px;font-weight:400;color:var(--mute);margin-right:6px;letter-spacing:0;}
+  .balance .cap{margin-top:9px;font-size:12.5px;color:var(--mute);letter-spacing:.1em;}
+  .split{display:flex;gap:30px;margin-top:22px;}
+  .split div{flex:1;}
+  .split .k{font-size:12.5px;color:var(--mute);letter-spacing:.08em;}
+  .split .v{font-size:20px;font-weight:300;margin-top:3px;}
+  .split .v.in{color:var(--sage);}
+
+  .day{margin-top:24px;}
+  .day-head{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--mute);letter-spacing:.06em;padding-bottom:8px;}
+  .row{width:100%;display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--rule);text-align:left;}
+  .row:active{background:var(--tap);}
+  .row .tag{width:38px;height:38px;flex:none;border-radius:50%;border:1px solid var(--rule);display:grid;place-items:center;font-size:12px;color:var(--mute);}
+  .row.in .tag{border-color:var(--sage);color:var(--sage);}
+  .row .body{flex:1;min-width:0;}
+  .row .t{font-size:15.5px;}
+  .row .s{font-size:12.5px;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row .amt{font-size:16.5px;flex:none;}
+  .row.in .amt{color:var(--sage);}
+  .empty{margin-top:64px;text-align:center;color:var(--faint);font-size:14px;line-height:2;}
+
+  .seg{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden;margin:18px 0 6px;}
+  .seg button{flex:1;padding:10px 0;font-size:14px;color:var(--mute);letter-spacing:.08em;}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);}
+  .stat{padding:17px 0;border-bottom:1px solid var(--rule);}
+  .stat .line{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;}
+  .stat .pct{color:var(--faint);font-size:12.5px;margin-left:8px;}
+  .bar{height:1px;background:var(--rule);margin-top:11px;position:relative;}
+  .bar i{position:absolute;left:0;top:-1px;height:3px;background:var(--ink);}
+  .stat.in .bar i{background:var(--sage);}
+  .tools{margin-top:30px;display:flex;gap:24px;}
+  .tools button{font-size:13.5px;color:var(--mute);border-bottom:1px solid var(--rule);padding-bottom:3px;}
+
+  /* 年度 */
+  .yr-months{margin-top:6px;}
+  .ym{width:100%;display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--rule);text-align:left;}
+  .ym:active{background:var(--tap);}
+  .ym .mo{width:2.6em;flex:none;font-size:13px;color:var(--mute);}
+  .ym .bars{flex:1;min-width:0;}
+  .ym .bars span{display:block;height:3px;background:var(--ink);border-radius:1px;}
+  .ym .bars span.i{background:var(--sage);margin-top:4px;}
+  .ym .net{flex:none;font-size:14px;width:6.4em;text-align:right;}
+  .ym .net.neg{color:var(--seal);}
+  .keyline{display:flex;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--rule);font-size:14.5px;}
+  .keyline .k{color:var(--mute);}
+  .legend{display:flex;gap:18px;margin-top:14px;font-size:12px;color:var(--mute);}
+  .legend i{display:inline-block;width:14px;height:3px;background:var(--ink);margin-right:6px;vertical-align:middle;}
+  .legend i.s{background:var(--sage);}
+  .sub{margin:30px 0 4px;font-size:13px;color:var(--mute);letter-spacing:.08em;}
+
+  /* 房貸 */
+  .loan-head{padding:18px 0 22px;border-bottom:1px solid var(--rule);}
+  .loan-head .figure{font-size:40px;font-weight:200;line-height:1;}
+  .loan-head .figure .unit{font-size:16px;color:var(--mute);margin-right:6px;font-weight:400;}
+  .loan-head .cap{margin-top:9px;font-size:12.5px;color:var(--mute);letter-spacing:.1em;}
+  .progress{height:1px;background:var(--rule);margin:22px 0 8px;position:relative;}
+  .progress i{position:absolute;left:0;top:-1px;height:3px;background:var(--ink);}
+  .progress-cap{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mute);}
+  .due{margin-top:20px;padding:14px 16px;border:1px solid var(--rule);border-radius:2px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .due.late{border-color:var(--seal);}
+  .due .d1{font-size:13px;color:var(--mute);}
+  .due .d2{font-size:19px;font-weight:300;margin-top:2px;}
+  .due.late .d1{color:var(--seal);}
+  .due button{border:1px solid var(--ink);border-radius:2px;padding:9px 14px;font-size:14px;flex:none;min-height:40px;}
+  .due button:active{background:var(--ink);color:var(--paper);}
+
+  .pager{display:flex;align-items:center;justify-content:space-between;margin-top:26px;font-size:12.5px;color:var(--mute);letter-spacing:.06em;}
+  .pager button{width:44px;height:36px;color:var(--faint);font-size:16px;}
+  .pager button:active{color:var(--ink);}
+  .term{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--rule);}
+  .term .no{width:3.2em;flex:none;font-size:12.5px;color:var(--faint);}
+  .term .info{flex:1;min-width:0;}
+  .term .l1{font-size:15px;}
+  .term .l2{font-size:12px;color:var(--faint);margin-top:2px;}
+  .term .mark{flex:none;width:64px;height:34px;border:1px solid var(--rule);border-radius:2px;font-size:12.5px;color:var(--mute);}
+  .term.paid .mark{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .term.paid .l1{color:var(--mute);}
+  .term.late .no{color:var(--seal);}
+  .term.late .mark{border-color:var(--seal);color:var(--seal);}
+
+  /* 預算 */
+  .bstrip{margin-top:22px;padding-top:18px;border-top:1px solid var(--rule);}
+  .bstrip .l{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--mute);}
+  .bstrip .big{font-size:26px;font-weight:300;margin-top:4px;}
+  .bstrip .big.over{color:var(--seal);}
+  .track{height:1px;background:var(--rule);margin:14px 0 7px;position:relative;}
+  .track i{position:absolute;left:0;top:-1px;height:3px;background:var(--ink);max-width:100%;}
+  .track i.over{background:var(--seal);}
+  .track u{position:absolute;top:-4px;width:1px;height:9px;background:var(--faint);}
+  .track-cap{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);}
+  .setup{display:block;margin-top:18px;font-size:13.5px;color:var(--mute);border-bottom:1px solid var(--rule);padding-bottom:3px;}
+  .stat .cap2{font-size:12px;color:var(--faint);margin-top:5px;display:flex;justify-content:space-between;}
+  .stat .cap2 .over{color:var(--seal);}
+  .stat .bar i.over{background:var(--seal);}
+  .stat .bar u{position:absolute;top:-3px;right:0;width:1px;height:7px;background:var(--faint);}
+  #wjson{width:100%;min-height:96px;margin-top:14px;border:1px solid var(--rule);background:var(--sheet);font-size:11px;padding:10px;font-family:ui-monospace,Menlo,monospace;resize:none;}
+  #wjson[hidden]{display:none;}
+  nav{display:flex;align-items:center;border-top:1px solid var(--rule);padding:6px 14px calc(env(safe-area-inset-bottom) + 6px);background:var(--paper);}
+  nav .tab{flex:1;height:48px;font-size:13px;color:var(--faint);letter-spacing:.1em;}
+  nav .tab[aria-selected="true"]{color:var(--ink);}
+  #add{width:52px;height:52px;flex:none;margin:0 6px;border:1px solid var(--ink);border-radius:50%;font-size:24px;font-weight:200;line-height:0;display:grid;place-items:center;}
+  #add:active{background:var(--ink);color:var(--paper);}
+
+  #scrim{position:fixed;inset:0;background:rgba(46,44,41,.28);opacity:0;pointer-events:none;transition:opacity .22s ease;}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;background:var(--sheet);
+    border-radius:14px 14px 0 0;transform:translateY(102%);
+    transition:transform .3s cubic-bezier(.32,.72,0,1);
+    max-width:560px;margin:0 auto;padding-bottom:env(safe-area-inset-bottom);
+    max-height:94%;display:flex;flex-direction:column;
+  }
+  body.open #scrim,body.open-loan #scrim,body.open-budget #scrim{opacity:1;pointer-events:auto;}
+  body.open #sheet{transform:translateY(0);}
+  body.open-loan #loan-sheet{transform:translateY(0);}
+  body.open-budget #budget-sheet{transform:translateY(0);}
+  @media (prefers-reduced-motion:reduce){.sheet,#scrim{transition:none;}}
+
+  .sheet-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--rule);}
+  .sheet-top button{font-size:15px;color:var(--mute);padding:6px 2px;min-width:44px;}
+  .sheet-top .done{color:var(--ink);text-align:right;}
+  .sheet-top .name{font-size:15px;font-weight:500;letter-spacing:.06em;}
+  .kind{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden;}
+  .kind button{padding:7px 16px;font-size:14px;letter-spacing:.06em;min-width:0;}
+  .kind button[aria-pressed="true"]{background:var(--ink);color:var(--sheet);}
+
+  .amount{padding:22px 22px 18px;text-align:right;font-size:38px;font-weight:200;line-height:1;border-bottom:1px solid var(--rule);}
+  .amount .unit{font-size:15px;color:var(--mute);margin-right:8px;font-weight:400;}
+  .amount.zero{color:var(--faint);}
+  .cats{padding:16px 18px 4px;display:flex;flex-wrap:wrap;gap:8px;overflow-y:auto;}
+  .cat{padding:9px 14px;border:1px solid var(--rule);border-radius:2px;font-size:14px;color:var(--mute);min-height:38px;}
+  .cat[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink);}
+  .fields{padding:10px 18px 14px;display:flex;gap:10px;align-items:center;}
+  .fields input[type="date"]{border:1px solid var(--rule);border-radius:2px;background:none;padding:9px 10px;font-size:15px;flex:none;min-height:40px;}
+  .fields input[type="text"]{flex:1;min-width:0;border:0;border-bottom:1px solid var(--rule);background:none;padding:9px 2px;font-size:16px;min-height:40px;}
+  .fields input::placeholder{color:var(--faint);}
+  .fields input:focus{outline:none;border-color:var(--ink);}
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);}
+  .pad button{height:58px;font-size:21px;font-weight:300;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+  .pad button:nth-child(3n){border-right:0;}
+  .pad button:active{background:var(--tap);}
+  #del-entry{display:block;width:100%;padding:15px 0;font-size:14px;color:var(--seal);letter-spacing:.08em;}
+  #del-entry[hidden]{display:none;}
+
+  .form{padding:4px 18px 18px;overflow-y:auto;}
+  .fl{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--rule);}
+  .fl label{font-size:14.5px;color:var(--mute);flex:none;}
+  .fl input{border:0;background:none;text-align:right;font-size:16px;min-height:40px;width:58%;}
+  .fl input:focus{outline:none;}
+  .fl .suffix{font-size:13px;color:var(--faint);}
+  .fl-col{padding:13px 0;border-bottom:1px solid var(--rule);}
+  .fl-col .lb{font-size:14.5px;color:var(--mute);margin-bottom:9px;}
+  .note{font-size:12.5px;color:var(--faint);line-height:1.7;padding:14px 0 0;}
+  #del-loan{display:block;width:100%;padding:15px 0;font-size:14px;color:var(--seal);letter-spacing:.08em;}
+
+  #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 90px);transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:2px;font-size:13.5px;letter-spacing:.05em;opacity:0;pointer-events:none;transition:opacity .2s;}
+  #toast.show{opacity:1;}
+  #csv{position:fixed;inset:18px;background:var(--sheet);border:1px solid var(--rule);padding:14px;display:none;flex-direction:column;gap:10px;}
+  #csv[data-open="1"]{display:flex;}
+  #csv textarea{flex:1;width:100%;border:1px solid var(--rule);background:var(--paper);font-size:12px;padding:10px;font-family:ui-monospace,Menlo,monospace;resize:none;}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <button class="nav-arrow" id="prev" aria-label="上一期">&lsaquo;</button>
+    <div id="title" class="num">—</div>
+    <button class="nav-arrow" id="next" aria-label="下一期">&rsaquo;</button>
+  </header>
+
+  <!-- 明細 -->
+  <main id="view-list">
+    <section class="balance">
+      <div class="figure num"><span class="unit">NT$</span><span id="bal">0</span></div>
+      <div class="cap">本月結餘</div>
+      <div class="split">
+        <div><div class="k">支出</div><div class="v num" id="sum-out">0</div></div>
+        <div><div class="k">收入</div><div class="v in num" id="sum-in">0</div></div>
+      </div>
+      <div id="b-strip"></div>
+    </section>
+    <div id="list"></div>
+  </main>
+
+  <!-- 分析 -->
+  <main id="view-stats" hidden>
+    <div id="b-panel"></div>
+    <div class="sub">分類</div>
+    <div class="seg">
+      <button id="seg-out" aria-pressed="true">支出</button>
+      <button id="seg-in" aria-pressed="false">收入</button>
+    </div>
+    <div id="stats"></div>
+    <div class="tools">
+      <button id="export">匯出 CSV</button>
+      <button id="sync">同步桌面小工具</button>
+    </div>
+    <textarea id="wjson" readonly hidden></textarea>
+  </main>
+
+  <!-- 年度 -->
+  <main id="view-year" hidden>
+    <section class="balance">
+      <div class="figure num"><span class="unit">NT$</span><span id="y-bal">0</span></div>
+      <div class="cap">全年結餘</div>
+      <div class="split">
+        <div><div class="k">支出</div><div class="v num" id="y-out">0</div></div>
+        <div><div class="k">收入</div><div class="v in num" id="y-in">0</div></div>
+      </div>
+    </section>
+    <div id="y-keys"></div>
+    <div class="sub">每月收支</div>
+    <div class="yr-months" id="y-months"></div>
+    <div class="legend"><span><i></i>支出</span><span><i class="s"></i>收入</span></div>
+    <div class="sub">全年支出分類</div>
+    <div id="y-cats"></div>
+  </main>
+
+  <!-- 房貸 -->
+  <main id="view-loan" hidden>
+    <div id="loan-body"></div>
+  </main>
+
+  <nav>
+    <button class="tab" id="tab-list" aria-selected="true">明細</button>
+    <button class="tab" id="tab-stats" aria-selected="false">預算</button>
+    <button id="add" aria-label="記一筆">＋</button>
+    <button class="tab" id="tab-year" aria-selected="false">年度</button>
+    <button class="tab" id="tab-loan" aria-selected="false">房貸</button>
+  </nav>
+</div>
+
+<div id="scrim"></div>
+
+<!-- 記一筆 -->
+<div class="sheet" id="sheet" role="dialog" aria-label="記一筆">
+  <div class="sheet-top">
+    <button id="cancel">取消</button>
+    <div class="kind">
+      <button id="k-out" aria-pressed="true">支出</button>
+      <button id="k-in" aria-pressed="false">收入</button>
+    </div>
+    <button id="save" class="done">儲存</button>
+  </div>
+  <div class="amount zero num" id="amt"><span class="unit">NT$</span><span id="amt-v">0</span></div>
+  <div class="cats" id="cats"></div>
+  <div class="fields">
+    <input type="date" id="f-date">
+    <input type="text" id="f-note" placeholder="備註" maxlength="24" enterkeyhint="done">
+  </div>
+  <div class="pad" id="pad"></div>
+  <button id="del-entry" hidden>刪除這筆</button>
+</div>
+
+<!-- 房貸設定 -->
+<div class="sheet" id="loan-sheet" role="dialog" aria-label="房貸設定">
+  <div class="sheet-top">
+    <button id="loan-cancel">取消</button>
+    <div class="name">房貸設定</div>
+    <button id="loan-save" class="done">儲存</button>
+  </div>
+  <div class="form">
+    <div class="fl"><label for="l-amount">貸款金額</label>
+      <input id="l-amount" type="number" inputmode="decimal" step="1" placeholder="0"><span class="suffix">元</span></div>
+    <div class="fl"><label for="l-rate">年利率</label>
+      <input id="l-rate" type="number" inputmode="decimal" step="0.001" placeholder="2.185"><span class="suffix">%</span></div>
+    <div class="fl"><label for="l-years">貸款年限</label>
+      <input id="l-years" type="number" inputmode="numeric" step="1" placeholder="30"><span class="suffix">年</span></div>
+    <div class="fl"><label for="l-grace">寬限期</label>
+      <input id="l-grace" type="number" inputmode="numeric" step="1" placeholder="0"><span class="suffix">年</span></div>
+    <div class="fl"><label for="l-first">首期繳款日</label>
+      <input id="l-first" type="date" style="width:auto"></div>
+    <div class="fl-col">
+      <div class="lb">還款方式</div>
+      <div class="kind" style="width:100%">
+        <button id="m-annuity" style="flex:1" aria-pressed="true">本息平均攤還</button>
+        <button id="m-even" style="flex:1" aria-pressed="false">本金平均攤還</button>
+      </div>
+    </div>
+    <div class="fl"><label for="l-cat">記帳分類</label>
+      <input id="l-cat" type="text" value="房貸" maxlength="6" style="text-align:right"></div>
+    <p class="note">本息平均攤還：每期繳款金額固定。本金平均攤還：每期本金固定，利息隨餘額遞減，前期負擔較重。<br>寬限期內只繳利息、不還本金。</p>
+    <button id="del-loan">刪除房貸設定</button>
+  </div>
+</div>
+
+<!-- 預算設定 -->
+<div class="sheet" id="budget-sheet" role="dialog" aria-label="預算設定">
+  <div class="sheet-top">
+    <button id="b-cancel">取消</button>
+    <div class="name">每月預算</div>
+    <button id="b-save" class="done">儲存</button>
+  </div>
+  <div class="form">
+    <div class="fl"><label for="b-total">每月總預算</label>
+      <input id="b-total" type="number" inputmode="decimal" step="1" placeholder="0"><span class="suffix">元</span></div>
+    <div class="fl-col">
+      <div class="lb">未繳房貸列入預算</div>
+      <div class="kind" style="width:100%">
+        <button id="b-loan-y" style="flex:1" aria-pressed="true">列入</button>
+        <button id="b-loan-n" style="flex:1" aria-pressed="false">不列入</button>
+      </div>
+    </div>
+    <div class="sub" style="margin:22px 0 0">分類預算（可留白）</div>
+    <div id="b-cats"></div>
+    <p class="note">「每日可花」＝（總預算 − 已花費 − 未繳房貸）÷ 本月剩餘天數。<br>把房貸列入預算時，該筆金額會先被保留起來，不算進可自由支配的部分。</p>
+    <button id="b-del">刪除預算設定</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="csv">
+  <textarea id="csv-text" readonly></textarea>
+  <div class="tools" style="margin:0;justify-content:space-between">
+    <button id="csv-copy">複製全部</button>
+    <button id="csv-close">關閉</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const KEY="ledger:v1", LKEY="loan:v1", BKEY="budget:v1";
+const CATS={
+  expense:["飲食","日用","交通","居住","房貸","通訊","醫療","教育","服飾","娛樂","人情","旅遊","其他"],
+  income:["薪資","獎金","投資","兼職","補助","退款","其他"]
+};
+
+const state={items:[],loan:null,budget:null,ym:"",year:0,tab:"list",statKind:"expense",loanFrom:0};
+const draft={id:null,kind:"expense",amount:"0",category:"",date:"",note:""};
+const ldraft={method:"annuity"};
+const bdraft={includeLoan:true};
+
+const $=s=>document.querySelector(s);
+const pad2=n=>String(n).padStart(2,"0");
+const todayStr=()=>{const d=new Date();return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());};
+const fmt=n=>{
+  n=Number(n)||0;
+  return Math.abs(n-Math.round(n))<0.005
+    ? Math.round(n).toLocaleString("zh-TW")
+    : n.toLocaleString("zh-TW",{minimumFractionDigits:2,maximumFractionDigits:2});
+};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function addMonths(dateStr,m){
+  const y=+dateStr.slice(0,4),mo=+dateStr.slice(5,7),d=+dateStr.slice(8,10);
+  const t=new Date(y,mo-1+m,1);
+  const last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();
+  return t.getFullYear()+"-"+pad2(t.getMonth()+1)+"-"+pad2(Math.min(d,last));
+}
+
+/* ── 儲存 ────────────────────────── */
+const store=(typeof window.storage!=="undefined"&&window.storage)?window.storage:{
+  async get(k){const v=localStorage.getItem(k);if(v===null)throw new Error("not found");return{key:k,value:v};},
+  async set(k,v){localStorage.setItem(k,v);return{key:k,value:v};},
+  async delete(k){localStorage.removeItem(k);return{key:k,deleted:true};}
+};
+const hasStore=true;
+let mem={items:[],loan:null,budget:null};
+
+async function load(){
+  if(!hasStore){state.items=mem.items;state.loan=mem.loan;state.budget=mem.budget;return;}
+  try{const r=await store.get(KEY);state.items=r&&r.value?JSON.parse(r.value):[];}
+  catch(e){state.items=[];}
+  if(!Array.isArray(state.items))state.items=[];
+  try{const r=await store.get(LKEY);state.loan=r&&r.value?JSON.parse(r.value):null;}
+  catch(e){state.loan=null;}
+  try{const r=await store.get(BKEY);state.budget=r&&r.value?JSON.parse(r.value):null;}
+  catch(e){state.budget=null;}
+}
+async function saveBudget(){
+  mem.budget=state.budget;
+  try{
+    if(state.budget) await store.set(BKEY,JSON.stringify(state.budget));
+    else await store.delete(BKEY);
+    return true;
+  }catch(e){toast("沒有存起來，請再試一次");return false;}
+}
+async function saveItems(){
+  mem.items=state.items;
+  if(!hasStore)return true;
+  try{if(!await store.set(KEY,JSON.stringify(state.items)))throw 0;return true;}
+  catch(e){toast("沒有存起來，請再試一次");return false;}
+}
+async function saveLoan(){
+  mem.loan=state.loan;
+  if(!hasStore)return true;
+  try{
+    if(state.loan) await store.set(LKEY,JSON.stringify(state.loan));
+    else await store.delete(LKEY);
+    return true;
+  }catch(e){toast("沒有存起來，請再試一次");return false;}
+}
+
+let toastTimer;
+function toast(msg){
+  const t=$("#toast");t.textContent=msg;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* ── 房貸試算 ────────────────────── */
+function schedule(){
+  const c=state.loan;
+  if(!c)return[];
+  const n=Math.round(c.years*12), g=Math.round((c.grace||0)*12), r=c.rate/100/12;
+  const m=Math.max(n-g,1);
+  let bal=c.amount, fixed=0;
+  if(c.method==="annuity") fixed = r>0 ? c.amount*r/(1-Math.pow(1+r,-m)) : c.amount/m;
+  const evenP=c.amount/m;
+  const rows=[];
+  for(let k=1;k<=n;k++){
+    const interest=bal*r;
+    let prin = k<=g ? 0 : (c.method==="annuity" ? fixed-interest : evenP);
+    if(k===n) prin=bal;
+    if(prin>bal) prin=bal;
+    if(prin<0) prin=0;
+    const pay=prin+interest;
+    bal-=prin;
+    rows.push({k,date:addMonths(c.first,k-1),pay,prin,interest,bal:Math.max(bal,0)});
+  }
+  return rows;
+}
+function paidTerms(){
+  const s=new Set();
+  state.items.forEach(i=>{if(i.loanTerm)s.add(i.loanTerm);});
+  return s;
+}
+
+/* ── 預算計算 ────────────────────── */
+function daysIn(ym){return new Date(+ym.slice(0,4),+ym.slice(5,7),0).getDate();}
+
+function loanDueThisMonth(){
+  if(!state.loan)return{total:0,unpaid:0,count:0};
+  const paid=paidTerms();
+  const rows=schedule().filter(r=>r.date.slice(0,7)===state.ym);
+  return{
+    total:rows.reduce((s,r)=>s+r.pay,0),
+    unpaid:rows.filter(r=>!paid.has(r.k)).reduce((s,r)=>s+r.pay,0),
+    count:rows.filter(r=>!paid.has(r.k)).length
+  };
+}
+
+function budgetStats(){
+  const b=state.budget;
+  const items=monthItems();
+  const spent=items.filter(i=>i.kind==="expense").reduce((s,i)=>s+i.amount,0);
+  const today=todayStr();
+  const nDays=daysIn(state.ym);
+  const cur=state.ym===today.slice(0,7);
+  const past=state.ym<today.slice(0,7);
+  const dayNo=cur?+today.slice(8,10):(past?nDays:0);
+  const daysLeft=cur?nDays-dayNo+1:(past?0:nDays);
+  const elapsed=Math.max(cur?dayNo:(past?nDays:0),1);
+
+  const loan=loanDueThisMonth();
+  const reserve=(b&&b.includeLoan!==false)?loan.unpaid:0;
+  const total=b?Number(b.total)||0:0;
+  const remain=total-spent;
+  const usable=remain-reserve;
+  const daily=daysLeft>0?usable/daysLeft:0;
+  const daySpent=items.filter(i=>i.kind==="expense"&&i.date===today)
+    .reduce((s,i)=>s+i.amount,0);
+  const forecast=cur?spent/elapsed*nDays:spent;
+  const timePct=cur?dayNo/nDays*100:(past?100:0);
+  const usePct=total>0?spent/total*100:0;
+
+  return{has:!!(b&&total>0),total,spent,remain,reserve,usable,daily,daysLeft,
+    nDays,dayNo,daySpent,forecast,timePct,usePct,cur,loan};
+}
+
+/* ── 月 / 年 ─────────────────────── */
+function monthItems(ym){
+  return state.items.filter(i=>i.date.slice(0,7)===(ym||state.ym))
+    .sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts);
+}
+function yearItems(){return state.items.filter(i=>+i.date.slice(0,4)===state.year);}
+
+function shift(step){
+  if(state.tab==="year"){state.year+=step;renderYear();}
+  else if(state.tab==="loan"){return;}
+  else{
+    const[y,m]=state.ym.split("-").map(Number);
+    const d=new Date(y,m-1+step,1);
+    state.ym=d.getFullYear()+"-"+pad2(d.getMonth()+1);
+    renderMonth();
+  }
+  setTitle();
+}
+function setTitle(){
+  const a=$("#prev"),b=$("#next");
+  if(state.tab==="loan"){$("#title").textContent="房屋貸款";a.hidden=b.hidden=true;return;}
+  a.hidden=b.hidden=false;
+  if(state.tab==="year"){$("#title").textContent=state.year+" 年";return;}
+  const[y,m]=state.ym.split("-");
+  $("#title").textContent=y+" 年 "+Number(m)+" 月";
+}
+
+/* ── 明細 ────────────────────────── */
+const WD=["日","一","二","三","四","五","六"];
+function renderMonth(){
+  const items=monthItems();
+  const out=items.filter(i=>i.kind==="expense").reduce((s,i)=>s+i.amount,0);
+  const inc=items.filter(i=>i.kind==="income").reduce((s,i)=>s+i.amount,0);
+  $("#sum-out").textContent=fmt(out);
+  $("#sum-in").textContent=fmt(inc);
+  const bal=inc-out;
+  $("#bal").textContent=(bal<0?"−":"")+fmt(Math.abs(bal));
+
+  const box=$("#list");
+  if(!items.length){box.innerHTML='<p class="empty">這個月還沒有紀錄<br>按下方的 ＋ 記第一筆</p>';}
+  else{
+    const g={};
+    items.forEach(i=>(g[i.date]=g[i.date]||[]).push(i));
+    box.innerHTML=Object.keys(g).sort().reverse().map(date=>{
+      const rows=g[date];
+      const dOut=rows.filter(r=>r.kind==="expense").reduce((s,r)=>s+r.amount,0);
+      const d=new Date(date+"T00:00:00");
+      const head=Number(date.slice(5,7))+"月"+Number(date.slice(8,10))+"日　週"+WD[d.getDay()];
+      return '<section class="day"><div class="day-head"><span>'+head+'</span><span class="num">'
+        +(dOut?"支出 "+fmt(dOut):"")+'</span></div>'
+        +rows.map(r=>'<button class="row '+(r.kind==="income"?"in":"")+'" data-id="'+r.id+'">'
+          +'<span class="tag">'+esc(r.category.slice(0,2))+'</span>'
+          +'<span class="body"><span class="t">'+esc(r.category)+'</span>'
+          +(r.note?'<span class="s">'+esc(r.note)+'</span>':'')+'</span>'
+          +'<span class="amt num">'+(r.kind==="income"?"+":"−")+fmt(r.amount)+'</span></button>').join("")
+        +'</section>';
+    }).join("");
+  }
+  renderStrip();
+  renderStats();
+}
+
+function renderStrip(){
+  const b=budgetStats(), box=$("#b-strip");
+  if(!b.has){
+    box.innerHTML='<button class="setup" data-setup-budget>設定每月預算</button>';
+    return;
+  }
+  const over=b.usable<0;
+  box.innerHTML='<div class="bstrip">'
+    +'<div class="l"><span>'+(b.daysLeft>0?"每日可花（剩 "+b.daysLeft+" 天）":"本月已結束")+'</span>'
+    +'<span class="num">餘 '+(over?"−":"")+fmt(Math.abs(b.usable))+'</span></div>'
+    +'<div class="big num'+(over?" over":"")+'">'+(b.daysLeft>0?(over?"−":"")+fmt(Math.abs(b.daily)):fmt(0))+'</div>'
+    +'<div class="track"><i class="'+(b.usePct>100?"over":"")+'" style="width:'+Math.min(b.usePct,100).toFixed(2)+'%"></i>'
+    +(b.cur?'<u style="left:'+b.timePct.toFixed(2)+'%"></u>':'')+'</div>'
+    +'<div class="track-cap"><span class="num">已花 '+fmt(b.spent)+' / '+fmt(b.total)+'</span>'
+    +'<span class="num">'+b.usePct.toFixed(0)+'%</span></div></div>';
+}
+
+function renderBudget(){
+  const b=budgetStats(), box=$("#b-panel");
+  if(!b.has){
+    box.innerHTML='<p class="empty">尚未設定每月預算<br>設定後可看到每日可花與剩餘額度</p>'
+      +'<div class="tools" style="justify-content:center"><button data-setup-budget>設定預算</button></div>';
+    return;
+  }
+  const over=b.usable<0;
+  let h='<section class="balance" style="border-bottom:0;padding-bottom:8px">'
+    +'<div class="figure num'+(over?'" style="color:var(--seal)':'')+'"><span class="unit">NT$</span>'
+    +(over?"−":"")+fmt(Math.abs(b.usable))+'</div>'
+    +'<div class="cap">本月可自由支配餘額</div>'
+    +'<div class="track" style="margin-top:20px"><i class="'+(b.usePct>100?"over":"")+'" style="width:'+Math.min(b.usePct,100).toFixed(2)+'%"></i>'
+    +(b.cur?'<u style="left:'+b.timePct.toFixed(2)+'%"></u>':'')+'</div>'
+    +'<div class="track-cap"><span>預算用掉 '+b.usePct.toFixed(0)+'%</span>'
+    +'<span>'+(b.cur?"時間過了 "+b.timePct.toFixed(0)+"%":"")+'</span></div></section>';
+
+  const pace=b.usePct-b.timePct;
+  h+='<div class="keyline"><span class="k">每月預算</span><span class="num">'+fmt(b.total)+'</span></div>'
+    +'<div class="keyline"><span class="k">本月已花費</span><span class="num">'+fmt(b.spent)+'</span></div>'
+    +'<div class="keyline"><span class="k">剩餘預算</span><span class="num'+(b.remain<0?'" style="color:var(--seal)':'')+'">'+(b.remain<0?"−":"")+fmt(Math.abs(b.remain))+'</span></div>';
+  if(b.reserve>0)
+    h+='<div class="keyline"><span class="k">保留給房貸（'+b.loan.count+' 期未繳）</span><span class="num">'+fmt(b.reserve)+'</span></div>';
+  h+='<div class="keyline"><span class="k">剩餘天數</span><span class="num">'+b.daysLeft+' 天</span></div>'
+    +'<div class="keyline"><span class="k">每日可花</span><span class="num'+(over?'" style="color:var(--seal)':'')+'">'+(over?"−":"")+fmt(Math.abs(b.daily))+'</span></div>'
+    +'<div class="keyline"><span class="k">今日已花</span><span class="num">'+fmt(b.daySpent)+'</span></div>'
+    +'<div class="keyline"><span class="k">預估月底支出</span><span class="num">'+fmt(b.forecast)+'</span></div>'
+    +'<div class="keyline"><span class="k">目前進度</span><span'+(pace>0?' style="color:var(--seal)"':'')+'>'
+    +(b.cur?(pace>0?"超前 "+pace.toFixed(0)+"%":"落後 "+Math.abs(pace).toFixed(0)+"%"):"—")+'</span></div>'
+    +'<div class="tools"><button data-setup-budget>調整預算</button></div>';
+  box.innerHTML=h;
+}
+
+function renderStats(){
+  const kind=state.statKind;
+  $("#seg-out").setAttribute("aria-pressed",kind==="expense");
+  $("#seg-in").setAttribute("aria-pressed",kind==="income");
+  $("#stats").innerHTML=catBars(monthItems().filter(i=>i.kind===kind),kind,kind==="expense")
+    ||'<p class="empty">這個月沒有'+(kind==="expense"?"支出":"收入")+'紀錄</p>';
+}
+function catBars(rows,kind,useBudget){
+  const total=rows.reduce((s,i)=>s+i.amount,0);
+  if(!total)return"";
+  const cb=(useBudget&&state.budget&&state.budget.cats)||{};
+  const by={};rows.forEach(r=>by[r.category]=(by[r.category]||0)+r.amount);
+  return Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([c,v])=>{
+    const p=v/total*100, lim=Number(cb[c])||0;
+    if(lim>0){
+      const u=v/lim*100, left=lim-v;
+      return '<div class="stat"><div class="line">'
+        +'<span>'+esc(c)+'<span class="pct num">'+u.toFixed(0)+'%</span></span>'
+        +'<span class="num">'+fmt(v)+' / '+fmt(lim)+'</span></div>'
+        +'<div class="bar"><i class="'+(u>100?"over":"")+'" style="width:'+Math.min(u,100).toFixed(2)+'%"></i><u></u></div>'
+        +'<div class="cap2"><span class="num'+(left<0?' over':'')+'">'
+        +(left<0?"超支 "+fmt(-left):"還可花 "+fmt(left))+'</span>'
+        +'<span class="num">占總支出 '+p.toFixed(1)+'%</span></div></div>';
+    }
+    return '<div class="stat '+(kind==="income"?"in":"")+'"><div class="line">'
+      +'<span>'+esc(c)+'<span class="pct num">'+p.toFixed(1)+'%</span></span>'
+      +'<span class="num">'+fmt(v)+'</span></div>'
+      +'<div class="bar"><i style="width:'+p.toFixed(2)+'%"></i></div></div>';
+  }).join("");
+}
+
+/* ── 年度 ────────────────────────── */
+function renderYear(){
+  const items=yearItems();
+  const out=items.filter(i=>i.kind==="expense").reduce((s,i)=>s+i.amount,0);
+  const inc=items.filter(i=>i.kind==="income").reduce((s,i)=>s+i.amount,0);
+  $("#y-out").textContent=fmt(out);
+  $("#y-in").textContent=fmt(inc);
+  const bal=inc-out;
+  $("#y-bal").textContent=(bal<0?"−":"")+fmt(Math.abs(bal));
+
+  const mOut=Array(12).fill(0), mIn=Array(12).fill(0);
+  items.forEach(i=>{
+    const k=+i.date.slice(5,7)-1;
+    if(i.kind==="expense")mOut[k]+=i.amount; else mIn[k]+=i.amount;
+  });
+  const active=mOut.map((v,k)=>v||mIn[k]).filter(Boolean).length||1;
+
+  let keys='<div class="keyline"><span class="k">月均支出</span><span class="num">'+fmt(out/active)+'</span></div>'
+    +'<div class="keyline"><span class="k">月均收入</span><span class="num">'+fmt(inc/active)+'</span></div>'
+    +'<div class="keyline"><span class="k">儲蓄率</span><span class="num">'+(inc>0?((inc-out)/inc*100).toFixed(1)+"%":"—")+'</span></div>';
+
+  if(state.loan){
+    const rows=schedule().filter(r=>+r.date.slice(0,4)===state.year);
+    const paid=paidTerms();
+    const due=rows.reduce((s,r)=>s+r.pay,0);
+    const done=rows.filter(r=>paid.has(r.k)).length;
+    keys+='<div class="keyline"><span class="k">房貸年度應繳</span><span class="num">'+fmt(due)+'</span></div>'
+      +'<div class="keyline"><span class="k">房貸繳納期數</span><span class="num">'+done+' / '+rows.length+' 期</span></div>';
+  }
+  $("#y-keys").innerHTML=keys;
+
+  const max=Math.max(...mOut,...mIn,1);
+  $("#y-months").innerHTML=mOut.map((v,k)=>{
+    const net=mIn[k]-v;
+    const has=v||mIn[k];
+    return '<button class="ym" data-m="'+(k+1)+'">'
+      +'<span class="mo num">'+(k+1)+'月</span>'
+      +'<span class="bars"><span style="width:'+(v/max*100).toFixed(2)+'%"></span>'
+      +'<span class="i" style="width:'+(mIn[k]/max*100).toFixed(2)+'%"></span></span>'
+      +'<span class="net num'+(net<0?" neg":"")+'">'+(has?(net<0?"−":"")+fmt(Math.abs(net)):"—")+'</span></button>';
+  }).join("");
+
+  $("#y-cats").innerHTML=catBars(items.filter(i=>i.kind==="expense"),"expense")
+    ||'<p class="empty">這一年還沒有支出紀錄</p>';
+}
+
+/* ── 房貸畫面 ────────────────────── */
+function renderLoan(){
+  const box=$("#loan-body");
+  if(!state.loan){
+    box.innerHTML='<p class="empty">尚未設定房屋貸款<br>設定後可看到每期應繳金額與繳納進度</p>'
+      +'<div class="tools" style="justify-content:center"><button id="setup-loan">設定房貸</button></div>';
+    return;
+  }
+  const c=state.loan, rows=schedule(), paid=paidTerms(), today=todayStr();
+  const n=rows.length;
+  const paidRows=rows.filter(r=>paid.has(r.k));
+  const paidPrin=paidRows.reduce((s,r)=>s+r.prin,0);
+  const paidInt=paidRows.reduce((s,r)=>s+r.interest,0);
+  const totalInt=rows.reduce((s,r)=>s+r.interest,0);
+  const nextRow=rows.find(r=>!paid.has(r.k));
+  const overdue=rows.filter(r=>!paid.has(r.k)&&r.date<today);
+  const graceN=Math.round((c.grace||0)*12);
+
+  let headFig, headCap;
+  if(nextRow){headFig=fmt(nextRow.pay);headCap="第 "+nextRow.k+" 期應繳金額";}
+  else{headFig=fmt(0);headCap="已全部繳清";}
+
+  const pct=n?paidRows.length/n*100:0;
+
+  let html='<section class="loan-head">'
+    +'<div class="figure num"><span class="unit">NT$</span>'+headFig+'</div>'
+    +'<div class="cap">'+headCap+'</div>'
+    +'<div class="progress"><i style="width:'+pct.toFixed(2)+'%"></i></div>'
+    +'<div class="progress-cap"><span>已繳 '+paidRows.length+' / '+n+' 期</span><span class="num">'+pct.toFixed(1)+'%</span></div>';
+
+  if(nextRow){
+    const late=nextRow.date<today;
+    html+='<div class="due'+(late?" late":"")+'">'
+      +'<div><div class="d1">'+(late?"逾期未繳":"下期繳款")+'　'+nextRow.date+'</div>'
+      +'<div class="d2 num">NT$ '+fmt(nextRow.pay)+'</div></div>'
+      +'<button data-pay="'+nextRow.k+'">記為已繳</button></div>';
+  }
+  html+='</section>';
+
+  html+='<div class="keyline"><span class="k">貸款金額</span><span class="num">'+fmt(c.amount)+'</span></div>'
+    +'<div class="keyline"><span class="k">年利率 / 年限</span><span class="num">'+c.rate+'% / '+c.years+' 年</span></div>'
+    +(graceN?'<div class="keyline"><span class="k">寬限期</span><span class="num">'+graceN+' 期（至 '+rows[graceN-1].date+'）</span></div>':'')
+    +'<div class="keyline"><span class="k">還款方式</span><span>'+(c.method==="annuity"?"本息平均攤還":"本金平均攤還")+'</span></div>'
+    +'<div class="keyline"><span class="k">剩餘本金</span><span class="num">'+fmt(c.amount-paidPrin)+'</span></div>'
+    +'<div class="keyline"><span class="k">已償本金</span><span class="num">'+fmt(paidPrin)+'</span></div>'
+    +'<div class="keyline"><span class="k">已付利息</span><span class="num">'+fmt(paidInt)+'</span></div>'
+    +'<div class="keyline"><span class="k">總利息（估）</span><span class="num">'+fmt(totalInt)+'</span></div>'
+    +'<div class="keyline"><span class="k">本息合計</span><span class="num">'+fmt(totalInt+c.amount)+'</span></div>';
+
+  if(overdue.length) html+='<div class="keyline"><span class="k" style="color:var(--seal)">逾期未繳</span><span class="num" style="color:var(--seal)">'+overdue.length+' 期・'+fmt(overdue.reduce((s,r)=>s+r.pay,0))+'</span></div>';
+
+  const from=Math.min(Math.max(state.loanFrom,0),Math.max(n-12,0));
+  state.loanFrom=from;
+  const page=rows.slice(from,from+12);
+  html+='<div class="pager"><button id="pg-prev" aria-label="前 12 期">&lsaquo;</button>'
+    +'<span>第 '+(from+1)+' – '+(from+page.length)+' 期，共 '+n+' 期</span>'
+    +'<button id="pg-next" aria-label="後 12 期">&rsaquo;</button></div>';
+
+  html+=page.map(r=>{
+    const p=paid.has(r.k), late=!p&&r.date<today;
+    return '<div class="term'+(p?" paid":"")+(late?" late":"")+'">'
+      +'<span class="no num">'+r.k+'</span>'
+      +'<span class="info"><span class="l1 num">'+r.date+'　NT$ '+fmt(r.pay)+'</span>'
+      +'<span class="l2 num">本金 '+fmt(r.prin)+'・利息 '+fmt(r.interest)+'・餘額 '+fmt(r.bal)+'</span></span>'
+      +'<button class="mark" data-toggle="'+r.k+'">'+(p?"已繳":(late?"逾期":"繳款"))+'</button></div>';
+  }).join("");
+
+  html+='<div class="tools"><button id="setup-loan">修改設定</button></div>';
+  box.innerHTML=html;
+}
+
+async function payTerm(k){
+  const c=state.loan, row=schedule().find(r=>r.k===k);
+  if(!row)return;
+  state.items.push({
+    id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+    kind:"expense",amount:Math.round(row.pay*100)/100,
+    category:c.category||"房貸",date:row.date,
+    note:"第 "+k+" 期（本金 "+fmt(row.prin)+"・利息 "+fmt(row.interest)+"）",
+    loanTerm:k,ts:Date.now()
+  });
+  await saveItems();
+  renderLoan();renderMonth();renderYear();renderBudget();
+  toast("第 "+k+" 期已記錄");
+}
+async function unpayTerm(k){
+  state.items=state.items.filter(i=>i.loanTerm!==k);
+  await saveItems();
+  renderLoan();renderMonth();renderYear();renderBudget();
+  toast("已取消第 "+k+" 期");
+}
+
+/* ── 記一筆面板 ──────────────────── */
+function openSheet(entry){
+  if(entry){
+    Object.assign(draft,{id:entry.id,kind:entry.kind,amount:String(entry.amount),
+      category:entry.category,date:entry.date,note:entry.note||"",loanTerm:entry.loanTerm||null});
+    $("#del-entry").hidden=false;
+  }else{
+    const d=state.ym===todayStr().slice(0,7)?todayStr():state.ym+"-01";
+    Object.assign(draft,{id:null,kind:"expense",amount:"0",category:"",date:d,note:"",loanTerm:null});
+    $("#del-entry").hidden=true;
+  }
+  syncSheet();
+  document.body.classList.add("open");
+}
+function closeSheet(){
+  document.body.classList.remove("open","open-loan","open-budget");
+  document.activeElement&&document.activeElement.blur();
+}
+function fmtRaw(s){
+  const[i,d]=s.split(".");
+  const head=Number(i||0).toLocaleString("zh-TW");
+  return d===undefined?head:head+"."+d;
+}
+function syncSheet(){
+  $("#k-out").setAttribute("aria-pressed",draft.kind==="expense");
+  $("#k-in").setAttribute("aria-pressed",draft.kind==="income");
+  $("#amt-v").textContent=draft.amount==="0"?"0":fmtRaw(draft.amount);
+  $("#amt").classList.toggle("zero",Number(draft.amount)===0);
+  $("#f-date").value=draft.date;
+  $("#f-note").value=draft.note;
+  const list=CATS[draft.kind].slice();
+  if(draft.category&&list.indexOf(draft.category)<0)list.push(draft.category);
+  $("#cats").innerHTML=list.map(c=>'<button class="cat" data-c="'+esc(c)+'" aria-pressed="'+(c===draft.category)+'">'+esc(c)+'</button>').join("");
+}
+function key(k){
+  if(k==="⌫"){
+    draft.amount=draft.amount.length>1?draft.amount.slice(0,-1):"0";
+    if(draft.amount.endsWith("."))draft.amount=draft.amount.slice(0,-1)||"0";
+  }else if(k==="."){
+    if(!draft.amount.includes("."))draft.amount+=".";
+  }else{
+    const dot=draft.amount.indexOf(".");
+    if(dot>-1&&draft.amount.length-dot>2)return;
+    if(draft.amount.replace(".","").length>=10)return;
+    draft.amount=draft.amount==="0"?k:draft.amount+k;
+  }
+  syncSheet();
+}
+async function commit(){
+  const amount=Number(draft.amount);
+  if(!(amount>0)){toast("請先輸入金額");return;}
+  if(!draft.category){toast("請選一個分類");return;}
+  draft.note=$("#f-note").value.trim();
+  draft.date=$("#f-date").value||todayStr();
+  if(draft.id){
+    const i=state.items.findIndex(x=>x.id===draft.id);
+    if(i>-1)state.items[i]=Object.assign({},state.items[i],
+      {kind:draft.kind,amount,category:draft.category,date:draft.date,note:draft.note});
+  }else{
+    state.items.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      kind:draft.kind,amount,category:draft.category,date:draft.date,note:draft.note,ts:Date.now()});
+  }
+  await saveItems();
+  state.ym=draft.date.slice(0,7);
+  closeSheet();setTitle();renderMonth();renderYear();renderLoan();renderBudget();
+  toast(draft.id?"已更新":"已記下");
+}
+async function removeEntry(){
+  state.items=state.items.filter(x=>x.id!==draft.id);
+  await saveItems();
+  closeSheet();renderMonth();renderYear();renderLoan();renderBudget();
+  toast("已刪除");
+}
+
+/* ── 房貸設定面板 ────────────────── */
+function openLoanSheet(){
+  const c=state.loan;
+  $("#l-amount").value=c?c.amount:"";
+  $("#l-rate").value=c?c.rate:"";
+  $("#l-years").value=c?c.years:"";
+  $("#l-grace").value=c?(c.grace||0):"";
+  $("#l-first").value=c?c.first:todayStr();
+  $("#l-cat").value=c?(c.category||"房貸"):"房貸";
+  ldraft.method=c?c.method:"annuity";
+  syncMethod();
+  $("#del-loan").hidden=!c;
+  document.body.classList.add("open-loan");
+}
+function syncMethod(){
+  $("#m-annuity").setAttribute("aria-pressed",ldraft.method==="annuity");
+  $("#m-even").setAttribute("aria-pressed",ldraft.method==="even");
+}
+async function commitLoan(){
+  const amount=Number($("#l-amount").value),
+        rate=Number($("#l-rate").value),
+        years=Number($("#l-years").value),
+        grace=Number($("#l-grace").value)||0,
+        first=$("#l-first").value,
+        category=$("#l-cat").value.trim()||"房貸";
+  if(!(amount>0)){toast("請輸入貸款金額");return;}
+  if(!(rate>=0)){toast("請輸入年利率");return;}
+  if(!(years>0)){toast("請輸入貸款年限");return;}
+  if(grace>=years){toast("寬限期需短於貸款年限");return;}
+  if(!first){toast("請選首期繳款日");return;}
+  state.loan={amount,rate,years,grace,first,category,method:ldraft.method};
+  await saveLoan();
+  state.loanFrom=Math.max(0,schedule().findIndex(r=>!paidTerms().has(r.k))-2);
+  closeSheet();renderLoan();renderYear();renderBudget();
+  toast("房貸設定已儲存");
+}
+async function deleteLoan(){
+  state.loan=null;
+  await saveLoan();
+  closeSheet();renderLoan();renderYear();renderBudget();
+  toast("已刪除設定（繳款紀錄保留）");
+}
+
+/* ── 預算設定面板 ────────────────── */
+function openBudgetSheet(){
+  const b=state.budget;
+  $("#b-total").value=b?b.total:"";
+  bdraft.includeLoan=b?b.includeLoan!==false:true;
+  syncLoanOpt();
+  const cats=(b&&b.cats)||{};
+  $("#b-cats").innerHTML=CATS.expense.map(c=>
+    '<div class="fl"><label>'+esc(c)+'</label>'
+    +'<input type="number" inputmode="decimal" step="1" data-bc="'+esc(c)+'" placeholder="—" value="'
+    +(cats[c]||"")+'"><span class="suffix">元</span></div>').join("");
+  $("#b-del").hidden=!b;
+  document.body.classList.add("open-budget");
+}
+function syncLoanOpt(){
+  $("#b-loan-y").setAttribute("aria-pressed",bdraft.includeLoan);
+  $("#b-loan-n").setAttribute("aria-pressed",!bdraft.includeLoan);
+}
+async function commitBudget(){
+  const total=Number($("#b-total").value);
+  if(!(total>0)){toast("請輸入每月總預算");return;}
+  const cats={};
+  $("#b-cats").querySelectorAll("[data-bc]").forEach(el=>{
+    const v=Number(el.value);
+    if(v>0)cats[el.dataset.bc]=v;
+  });
+  state.budget={total,cats,includeLoan:bdraft.includeLoan};
+  await saveBudget();
+  closeSheet();renderMonth();renderBudget();
+  toast("預算已儲存");
+}
+async function deleteBudget(){
+  state.budget=null;
+  await saveBudget();
+  closeSheet();renderMonth();renderBudget();
+  toast("已刪除預算設定");
+}
+
+/* ── 桌面小工具 ──────────────────── */
+function widgetPayload(){
+  const b=budgetStats();
+  return{v:1,ym:state.ym,budget:Math.round(b.total),spent:Math.round(b.spent),
+    loan:Math.round(b.reserve),day:todayStr(),daySpent:Math.round(b.daySpent),
+    ts:new Date().toISOString().slice(0,16).replace("T"," ")};
+}
+async function syncWidget(){
+  if(!budgetStats().has){toast("請先設定每月預算");return;}
+  const json=JSON.stringify(widgetPayload());
+  const ta=$("#wjson");
+  ta.value=json;ta.hidden=false;
+  try{await navigator.clipboard.writeText(json);toast("資料已複製");}
+  catch(e){toast("請長按選取下方文字複製");}
+  setTimeout(()=>{
+    location.href="shortcuts://run-shortcut?name="
+      +encodeURIComponent("更新記帳小工具")+"&input=text&text="+encodeURIComponent(json);
+  },250);
+}
+
+/* ── CSV ─────────────────────────── */
+function buildCsv(){
+  return "日期,類型,分類,金額,期數,備註\n"+state.items.slice()
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .map(i=>[i.date,i.kind==="income"?"收入":"支出",i.category,i.amount,i.loanTerm||"",
+      '"'+String(i.note||"").replace(/"/g,'""')+'"'].join(","))
+    .join("\n");
+}
+
+/* ── 事件 ────────────────────────── */
+$("#pad").innerHTML=["1","2","3","4","5","6","7","8","9",".","0","⌫"]
+  .map(k=>'<button data-k="'+k+'">'+k+'</button>').join("");
+$("#pad").addEventListener("click",e=>{const b=e.target.closest("button");if(b)key(b.dataset.k);});
+
+$("#prev").onclick=()=>shift(-1);
+$("#next").onclick=()=>shift(1);
+$("#add").onclick=()=>openSheet(null);
+$("#cancel").onclick=closeSheet;
+$("#scrim").onclick=closeSheet;
+$("#save").onclick=commit;
+$("#del-entry").onclick=removeEntry;
+$("#k-out").onclick=()=>{draft.kind="expense";draft.category="";syncSheet();};
+$("#k-in").onclick=()=>{draft.kind="income";draft.category="";syncSheet();};
+$("#cats").addEventListener("click",e=>{
+  const b=e.target.closest(".cat");if(!b)return;
+  draft.category=b.dataset.c;syncSheet();
+});
+$("#f-note").addEventListener("keydown",e=>{if(e.key==="Enter")e.target.blur();});
+$("#list").addEventListener("click",e=>{
+  const r=e.target.closest(".row");if(!r)return;
+  const item=state.items.find(x=>x.id===r.dataset.id);
+  if(item)openSheet(item);
+});
+$("#y-months").addEventListener("click",e=>{
+  const b=e.target.closest(".ym");if(!b)return;
+  state.ym=state.year+"-"+pad2(b.dataset.m);
+  switchTab("list");renderMonth();
+});
+$("#loan-body").addEventListener("click",async e=>{
+  const s=e.target.closest("#setup-loan");
+  if(s){openLoanSheet();return;}
+  const p=e.target.closest("[data-pay]");
+  if(p){await payTerm(+p.dataset.pay);return;}
+  const t=e.target.closest("[data-toggle]");
+  if(t){
+    const k=+t.dataset.toggle;
+    paidTerms().has(k)?await unpayTerm(k):await payTerm(k);
+    return;
+  }
+  if(e.target.closest("#pg-prev")){state.loanFrom-=12;renderLoan();}
+  if(e.target.closest("#pg-next")){state.loanFrom+=12;renderLoan();}
+});
+
+$("#b-cancel").onclick=closeSheet;
+$("#b-save").onclick=commitBudget;
+$("#b-del").onclick=deleteBudget;
+$("#b-loan-y").onclick=()=>{bdraft.includeLoan=true;syncLoanOpt();};
+$("#b-loan-n").onclick=()=>{bdraft.includeLoan=false;syncLoanOpt();};
+$("#sync").onclick=syncWidget;
+document.addEventListener("click",e=>{
+  if(e.target.closest("[data-setup-budget]"))openBudgetSheet();
+});
+
+$("#loan-cancel").onclick=closeSheet;
+$("#loan-save").onclick=commitLoan;
+$("#del-loan").onclick=deleteLoan;
+$("#m-annuity").onclick=()=>{ldraft.method="annuity";syncMethod();};
+$("#m-even").onclick=()=>{ldraft.method="even";syncMethod();};
+
+function switchTab(t){
+  state.tab=t;
+  $("#view-list").hidden=t!=="list";
+  $("#view-stats").hidden=t!=="stats";
+  $("#view-year").hidden=t!=="year";
+  $("#view-loan").hidden=t!=="loan";
+  [["list","#tab-list"],["stats","#tab-stats"],["year","#tab-year"],["loan","#tab-loan"]]
+    .forEach(([k,sel])=>$(sel).setAttribute("aria-selected",t===k));
+  setTitle();
+}
+$("#tab-list").onclick=()=>switchTab("list");
+$("#tab-stats").onclick=()=>{renderBudget();switchTab("stats");};
+$("#tab-year").onclick=()=>{renderYear();switchTab("year");};
+$("#tab-loan").onclick=()=>{renderLoan();switchTab("loan");};
+$("#seg-out").onclick=()=>{state.statKind="expense";renderStats();};
+$("#seg-in").onclick=()=>{state.statKind="income";renderStats();};
+
+$("#export").onclick=()=>{
+  if(!state.items.length){toast("還沒有資料可以匯出");return;}
+  $("#csv-text").value=buildCsv();
+  $("#csv").dataset.open="1";
+};
+$("#csv-close").onclick=()=>{$("#csv").dataset.open="0";};
+$("#csv-copy").onclick=async()=>{
+  const ta=$("#csv-text");
+  try{await navigator.clipboard.writeText(ta.value);toast("已複製");}
+  catch(e){ta.focus();ta.setSelectionRange(0,ta.value.length);toast("請長按選取後複製");}
+};
+
+(async function init(){
+  state.ym=todayStr().slice(0,7);
+  state.year=+todayStr().slice(0,4);
+  await load();
+  if(state.loan){
+    const idx=schedule().findIndex(r=>!paidTerms().has(r.k));
+    state.loanFrom=Math.max(0,(idx<0?0:idx)-2);
+  }
+  setTitle();renderMonth();renderYear();renderLoan();renderBudget();
+})();
+})();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>PayloadIdentifier</key>
+			<string>tw.local.ledger.webclip</string>
+			<key>PayloadUUID</key>
+			<string>C8D1CE25-7537-4F80-9616-8139D6FDF736</string>
+			<key>PayloadDisplayName</key>
+			<string>記帳</string>
+			<key>PayloadDescription</key>
+			<string>在主畫面建立「記帳」圖示</string>
+			<key>Label</key>
+			<string>記帳</string>
+			<key>URL</key>
+			<string>https://example.com/ledger/</string>
+			<key>FullScreen</key>
+			<true/>
+			<key>Precomposed</key>
+			<true/>
+			<key>IsRemovable</key>
+			<true/>
+			<key>IgnoreManifestScope</key>
+			<true/>
+			<key>Icon</key>
+			<data>
+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
+			</data>
+		</dict>
+	</array>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+	<key>PayloadIdentifier</key>
+	<string>tw.local.ledger</string>
+	<key>PayloadUUID</key>
+	<string>A9C2BDAE-A570-4F0E-BBF6-1DFA11220FF5</string>
+	<key>PayloadDisplayName</key>
+	<string>記帳</string>
+	<key>PayloadOrganization</key>
+	<string>個人使用</string>
+	<key>PayloadDescription</key>
+	<string>安裝後會在主畫面新增「記帳」圖示，以全螢幕方式開啟。可隨時在「設定 &gt; 一般 &gt; VPN 與裝置管理」移除。</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>ConsentText</key>
+	<dict>
+		<key>default</key>
+		<string>本設定檔只會在主畫面建立一個網頁捷徑，不會存取你的資料、位置或通訊內容。</string>
+	</dict>
+</dict>
+</plist>
