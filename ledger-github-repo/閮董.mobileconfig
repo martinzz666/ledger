@@ -12,7 +12,7 @@
 			<key>PayloadIdentifier</key>
 			<string>tw.local.ledger.webclip</string>
 			<key>PayloadUUID</key>
-			<string>C8D1CE25-7537-4F80-9616-8139D6FDF736</string>
+			<string>096AB2B7-89DE-4705-BC48-6691DD9A647A</string>
 			<key>PayloadDisplayName</key>
 			<string>記帳</string>
 			<key>PayloadDescription</key>
@@ -20,7 +20,7 @@
 			<key>Label</key>
 			<string>記帳</string>
 			<key>URL</key>
-			<string>https://example.com/ledger/</string>
+			<string>https://martinzz666.github.io/ledger/</string>
 			<key>FullScreen</key>
 			<true/>
 			<key>Precomposed</key>
@@ -109,7 +109,7 @@ ByAF5ACkgByAFJADkAJyAFJADkAKyAFIATkAKf8D3XsfSvhmO8cAAAAASUVORK5CYII=
 	<key>PayloadIdentifier</key>
 	<string>tw.local.ledger</string>
 	<key>PayloadUUID</key>
-	<string>A9C2BDAE-A570-4F0E-BBF6-1DFA11220FF5</string>
+	<string>5077D8C4-D5D3-4FED-A4FA-87923A8FC0C3</string>
 	<key>PayloadDisplayName</key>
 	<string>記帳</string>
 	<key>PayloadOrganization</key>

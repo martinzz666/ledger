@@ -9,7 +9,9 @@
 
 ## 網頁版
 
-開啟 GitHub Pages 網址即可使用。安裝方式、描述檔與 Scriptable 小工具說明見 [安裝說明.md](安裝說明.md)。
+👉 **https://martinzz666.github.io/ledger/**
+
+用 Safari 開啟後「分享 → 加入主畫面」即可。安裝方式、描述檔與 Scriptable 小工具說明見 [安裝說明.md](安裝說明.md)。
 
 - `index.html`　App 本體（單一檔案）
 - `manifest.webmanifest`、`sw.js`　PWA 設定與離線快取
